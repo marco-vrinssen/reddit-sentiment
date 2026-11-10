@@ -1,0 +1,19 @@
+{
+  "name": "reddit-sentiment",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code plugin: Reddit sentiment investment reports through the official Reddit Data API.",
+  "license": "MIT",
+  "repository": "github:marco-vrinssen/reddit-sentiment",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:live": "REDDIT_LIVE=1 node --test test/live.test.js",
+    "record": "node scripts/record-fixtures.js",
+    "fake-reddit": "node test/fake-reddit.js",
+    "validate": "claude plugin validate plugin && claude plugin validate ."
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

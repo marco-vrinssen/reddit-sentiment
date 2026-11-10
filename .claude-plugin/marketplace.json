@@ -1,0 +1,14 @@
+{
+  "name": "reddit-sentiment",
+  "description": "One plugin: Reddit sentiment investment reports through the official Reddit Data API.",
+  "owner": {
+    "name": "Marco Vrinssen"
+  },
+  "plugins": [
+    {
+      "name": "reddit-sentiment",
+      "source": "./plugin",
+      "description": "Reddit sentiment investment reports through the official Reddit Data API."
+    }
+  ]
+}

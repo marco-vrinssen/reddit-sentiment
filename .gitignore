@@ -1,0 +1,7 @@
+node_modules/
+reports/
+.DS_Store
+.env
+.env.*
+# Real Reddit content and usernames: stays local, never published.
+test/fixtures/recorded.json

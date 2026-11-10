@@ -1,0 +1,18 @@
+{
+  "name": "reddit-sentiment",
+  "displayName": "Reddit Sentiment",
+  "version": "0.1.0",
+  "description": "Scans Reddit through the official Data API and writes investment reports: overall market sentiment, or the consumer demand signal for one industry, with an Invest, Watch or Avoid verdict.",
+  "author": {
+    "name": "Marco Vrinssen"
+  },
+  "homepage": "https://github.com/marco-vrinssen/reddit-sentiment",
+  "repository": "https://github.com/marco-vrinssen/reddit-sentiment",
+  "license": "MIT",
+  "keywords": [
+    "reddit",
+    "sentiment",
+    "investing",
+    "equity research"
+  ]
+}
