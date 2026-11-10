@@ -1,6 +1,7 @@
 node_modules/
 reports/
 .DS_Store
+.playwright-cli/
 .env
 .env.*
 # Real Reddit content and usernames: stays local, never published.

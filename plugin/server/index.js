@@ -4,29 +4,41 @@
 import { readFileSync } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { loadCredentials } from './credentials.js'
+import { createBrowserClient } from './browser.js'
 import { RedditError } from './errors.js'
-import { createRedditClient } from './reddit.js'
+import { createRedditClientFromEnv } from './reddit.js'
 import { createTools } from './tools.js'
 
 const { version } = JSON.parse(readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8'))
 const PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05']
 const INSTRUCTIONS =
-  "Read-only access to Reddit's official Data API for the sentiment-report skill. Call check_connection first. Every result says whether it is complete; never present partial data as complete."
+  "Read-only Reddit data for the sentiment-report skill, from the official Data API or, when the user turned it on and credentials are missing, the browser fallback. Call check_connection first. Every result names its data_source and says whether it is complete; never present partial or unofficial data as complete or official."
+const BROWSER_FALLBACK = ['1', 'true', 'on', 'yes'].includes(String(process.env.REDDIT_SENTIMENT_BROWSER_FALLBACK).trim().toLowerCase())
 
 const log = (message) => process.stderr.write(`[reddit-sentiment] ${message}\n`)
 
+// Official API whenever credentials load. The browser fallback only when they are missing and the
+// user turned it on; rejected credentials never fall back. Credentials added later win again.
 let client = null
 function getClient() {
-  if (!client) {
-    const credentials = loadCredentials({ version })
-    client = createRedditClient({
-      credentials,
-      authUrl: process.env.REDDIT_AUTH_URL || undefined,
-      apiBase: process.env.REDDIT_API_BASE || undefined,
-      maxQpm: Number(process.env.REDDIT_MAX_QPM) || 100,
+  if (client?.stats().data_source === 'official_api') return client
+  let credentials
+  try {
+    credentials = loadCredentials({ version })
+  } catch (error) {
+    if (!BROWSER_FALLBACK) {
+      error.message += '\nOr turn on the browser fallback in the plugin settings, which reads unofficial data through your Chrome (see the README).'
+      throw error
+    }
+    if (!client) log('credentials missing: using the browser fallback')
+    client ??= createBrowserClient({
+      cli: process.env.PLAYWRIGHT_CLI || undefined,
+      paceMs: Math.max(1000, Number(process.env.REDDIT_SENTIMENT_BROWSER_PACE_MS) || 3000),
       log,
     })
+    return client
   }
+  client = createRedditClientFromEnv({ credentials, log })
   return client
 }
 

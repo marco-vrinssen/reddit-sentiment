@@ -24,6 +24,12 @@ In market mode the verdict reads as Invest, Watch or Avoid for broad equity expo
 
 Call `check_connection`. If it fails, stop and show its message. Never fill the gap with web search, memory or another data source: a report must rest on the scan it claims.
 
+Its `data_source` is `official_api`, or `browser_fallback` when the API credentials are missing and the user turned the plugin's browser fallback on. With `browser_fallback`:
+
+- Tell the user in one line that this report uses unofficial data, read from the Reddit website through their Chrome, then continue.
+- Each page takes a few seconds, so measure at most 15 candidates with `max_pages` 1, and read comments for the 10 highest-weighted posts.
+- Mark the report as unofficial, as the Rules say.
+
 ### 2. Choose communities on evidence
 
 Market:
@@ -80,7 +86,7 @@ Label from the content, never from the weight.
 
 ### 6. Name the report and score
 
-Name the report now: `reports/<YYYY-MM-DD>-<slug>.md` under the current working directory, with today's date. The slug is `market`, or the industry in lowercase with hyphens, such as `power-tools`. Add `-2`, `-3` when a report of that name exists. The evidence file has the same name ending in `.evidence.json`.
+Name the report now: `reports/<YYYY-MM-DD>-<slug>.md` under the current working directory, with today's date. The slug is `market`, or the industry in lowercase with hyphens, such as `power-tools`, and ends in `-unofficial` with `browser_fallback` data. Add `-2`, `-3` when a report of that name exists. The evidence file has the same name ending in `.evidence.json`.
 
 Call `score_sentiment` with the scan id, the mode, all labels and the evidence file's absolute path as `evidence_path`.
 
@@ -112,6 +118,7 @@ Fill the template and save the report under the name from step 6.
 - Quotes stay under 20 words, from posts or comments. Never name Reddit users.
 - A theme carried by fewer than three threads or by one community is an anecdote. Say so, and never build the verdict on it.
 - When any tool reports `complete: false`, the Verdict section says so in one line and Risks and limits lists every gap.
+- With `browser_fallback` data, the title ends in "(unofficial data)", the Verdict section opens with "Unofficial data: read from the Reddit website through a browser, not the official Reddit Data API.", and Risks and limits says that Reddit's terms do not permit this collection.
 - Say once, in Risks and limits: "This report is automated analysis, not financial advice. The tool's author accepts no responsibility for decisions based on it." Do not repeat it or soften the verdict around it.
 - State the limits of the data plainly: Reddit sentiment is one input among several, and its users are not all buyers.
 - Write in English, in plain Markdown a reader can scan: short sentences, tables for numbers, no decoration.

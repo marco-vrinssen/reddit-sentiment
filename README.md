@@ -13,6 +13,8 @@ This tool and its reports are for information and research only. They are not fi
 
 The author is not a licensed financial adviser and accepts no responsibility or liability for any investment decision, loss or damage that results from using this tool or its reports. Reddit sentiment can be wrong, incomplete or manipulated, and the verdicts come from automated analysis by an AI model. Do your own research and consult a licensed professional before you invest.
 
+The optional browser fallback reads the Reddit website instead of the official API, which Reddit's terms do not permit. It is off by default. If you turn it on, you do so at your own risk, including the risk to the Reddit account signed in to your Chrome.
+
 The software is provided as is, without warranty of any kind, under the [MIT License](LICENSE).
 
 ## User setup
@@ -22,10 +24,17 @@ The software is provided as is, without warranty of any kind, under the [MIT Lic
 - [Claude Code](https://code.claude.com).
 - [Node.js](https://nodejs.org) 22 or later.
 - Access to the Reddit Data API: a Reddit app approved for your use, its client id and client secret, and the Reddit username that owns the app. New API clients need Reddit's approval, and commercial use needs Reddit's written approval under its Data API Terms. The plugin never asks for your Reddit password.
+- Or, without API access, the browser fallback described below.
 
 ### 1. Store your Reddit credentials
 
-On macOS, put them in the keychain. Each command asks for the value, so it never lands in your shell history or a file.
+On macOS, put them in the keychain. In a clone of this repository, one command asks for all three and then checks them with Reddit:
+
+```bash
+npm run setup
+```
+
+Without a clone, store them one by one. Each command asks for the value, so it never lands in your shell history or a file.
 
 ```bash
 security add-generic-password -s reddit-sentiment -a client-id -w
@@ -55,7 +64,7 @@ Inside Claude Code, `/plugin marketplace add` and `/plugin install` do the same.
 
 ### 3. Check the connection
 
-Ask Claude: "Check the Reddit connection." It shows where each credential came from and the current rate limit. If a credential is missing or rejected, the answer names it and says how to fix it.
+Ask Claude: "Check the Reddit connection." It shows whether the data comes from the official API or the browser fallback, where each credential came from and the current rate limit. If a credential is missing or rejected, the answer names it and says how to fix it.
 
 ### 4. Write a report
 
@@ -76,6 +85,23 @@ You can also ask in your own words, such as "How do Reddit's car buyers feel rig
 
 A report takes 100 to 150 API calls and a few minutes. It is saved in `reports/` in the folder Claude Code runs in, for example `reports/2026-11-10-tents.md`. Next to it, `reports/2026-11-10-tents.evidence.json` lists every thread with its weight and label.
 
+### Optional: browser fallback
+
+Without API credentials, the plugin can read the Reddit website through your own Chrome instead. Read the [Disclaimer](#disclaimer) first: Reddit's terms do not permit this.
+
+- It runs only when the credentials are missing and you turned it on. Rejected credentials never fall back.
+- It drives Chrome with [playwright-cli](https://www.npmjs.com/package/@playwright/cli) and the Playwright extension. Chrome asks you to approve the connection, and the plugin then uses one tab for the report.
+- It reads one page every 3 seconds, so a report takes 10 to 15 minutes. It stops at any block, sign-in wall or CAPTCHA and never works around them.
+- Every result, report and evidence file is marked as unofficial data, and report names end in `-unofficial`.
+
+To turn it on, set Browser fallback under Reddit Sentiment in `/config`, or run:
+
+```bash
+echo '{"browser_fallback":"true"}' | claude plugin configure reddit-sentiment@reddit-sentiment --values-stdin
+```
+
+Then start a new Claude Code session.
+
 ### What a report contains
 
 1. **Verdict**: Invest, Watch or Avoid, its confidence, the numbers behind it and what would change it.
@@ -93,7 +119,7 @@ A report takes 100 to 150 API calls and a few minutes. It is saved in `reports/`
 | `.claude-plugin/marketplace.json` | A one-plugin marketplace, so the repository installs directly |
 | `plugin/.claude-plugin/plugin.json` | Plugin manifest and version |
 | `plugin/.mcp.json` | Starts the MCP server with `node` |
-| `plugin/server/` | The MCP server: plain JavaScript, no dependencies, no build step |
+| `plugin/server/` | The MCP server: plain JavaScript, no dependencies, no build step. `reddit.js` talks to the API, `browser.js` is the browser fallback |
 | `plugin/skills/sentiment-report/` | The method: `SKILL.md` (steps), [`method.md`](plugin/skills/sentiment-report/method.md) (formulas and thresholds), `report-template.md` |
 | `plugin/commands/` | The `market` and `industry` commands |
 | `test/`, `scripts/` | Tests, a local fake Reddit and the fixture recorder. Not part of the installed plugin |
@@ -104,7 +130,7 @@ The MCP server, `reddit`, is read-only.
 
 | Tool | Does |
 |---|---|
-| `check_connection` | Authenticates and shows the credential sources and rate limit |
+| `check_connection` | Checks the data source: the API with its credential sources and rate limit, or the browser fallback |
 | `find_communities` | Searches communities for several queries and merges them, without NSFW, private and quarantined ones |
 | `measure_communities` | Measures subscribers and posts and comments per day, and ranks by size and activity together |
 | `collect_posts` | Collects top posts of up to five communities over the window, filters noise, weights by engagement and recency, and returns a scan id that later calls add to |
@@ -113,7 +139,8 @@ The MCP server, `reddit`, is read-only.
 
 ### How it behaves
 
-- **Official access only.** Application-only OAuth (`client_credentials`) against `oauth.reddit.com`, with a User-Agent of the form Reddit requires. No scraping, no anonymous fallback.
+- **Official access first.** Application-only OAuth (`client_credentials`) against `oauth.reddit.com`, with a User-Agent of the form Reddit requires.
+- **Browser fallback only on request.** With the setting on and the credentials missing, `browser.js` attaches to Chrome through `playwright-cli attach --extension=chrome` in its own session, opens the website's `.json` pages and reads them. These have the same shape as the API, so filters and scoring are unchanged. One page every 3 seconds, a 15-minute cache, one wait on a 429. Blocks, sign-in walls and CAPTCHAs stop the scan. The session detaches after 10 idle minutes, and playwright-cli runs in the plugin's data folder, so it leaves no files in your project. Every tool result carries `data_source`.
 - **Communities on evidence.** Candidates come from community search and are ranked by `log10(1 + subscribers) + log10(1 + comments per day)`. Industry reports use customer communities. An optional investor view is scored and reported separately.
 - **Signal over noise.** Removed posts, bots, moderator and pinned posts, promotions, memes, low-engagement posts, crossposts and posts outside the window are dropped and counted. Engagement is damped with logarithms and taken relative to each community, and older posts weigh less.
 - **Arithmetic in code.** Claude labels each thread's stance and topics; the server computes every number, so a report can be reproduced from its evidence file.
@@ -130,6 +157,9 @@ The MCP server, `reddit`, is read-only.
 | `REDDIT_USER_AGENT` | `<platform>:reddit-sentiment:<version> (by /u/<username>)` | Override the User-Agent |
 | `REDDIT_MAX_QPM` | 100 | Request ceiling per minute, for a paid plan with other limits |
 | `REDDIT_SENTIMENT_NO_KEYCHAIN` | unset | `1` reads credentials from the environment only |
+| `REDDIT_SENTIMENT_BROWSER_FALLBACK` | the Browser fallback setting | Set by the plugin from its setting |
+| `REDDIT_SENTIMENT_BROWSER_PACE_MS` | 3000 | Pause between browser pages, at least 1000 |
+| `PLAYWRIGHT_CLI` | `playwright-cli` | Path to playwright-cli when it is not on the PATH |
 
 ### Limits
 
@@ -149,13 +179,19 @@ git clone https://github.com/marco-vrinssen/reddit-sentiment.git
 npm test
 ```
 
-Runs offline, without credentials, against a local fake Reddit (`test/fake-reddit.js`) serving `test/fixtures/synthetic.json`. That file is hand-built in the Data API's response shapes and holds no real posts. The tests cover the filters, the scoring, the HTTP client with its auth, retry and rate-limit paths, and the MCP server end to end over stdio.
+Runs offline, without credentials, against a local fake Reddit (`test/fake-reddit.js`) and a fake playwright-cli (`test/fake-playwright.js`), both serving `test/fixtures/synthetic.json`. That file is hand-built in the Data API's response shapes and holds no real posts. The tests cover the filters, the scoring, the HTTP client with its auth, retry and rate-limit paths, and the MCP server end to end over stdio.
 
 ```bash
 npm run validate
 ```
 
 Validates the plugin and marketplace manifests.
+
+```bash
+npm run check
+```
+
+Checks the stored credentials with Reddit, the way the plugin loads them (2 API calls).
 
 ```bash
 claude --plugin-dir ./plugin

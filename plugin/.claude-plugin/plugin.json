@@ -1,7 +1,7 @@
 {
   "name": "reddit-sentiment",
   "displayName": "Reddit Sentiment",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scans Reddit through the official Data API and writes investment reports: overall market sentiment, or the consumer demand signal for one industry, with an Invest, Watch or Avoid verdict.",
   "author": {
     "name": "Marco Vrinssen"
@@ -14,5 +14,13 @@
     "sentiment",
     "investing",
     "equity research"
-  ]
+  ],
+  "userConfig": {
+    "browser_fallback": {
+      "type": "boolean",
+      "title": "Browser fallback",
+      "description": "When the Reddit API credentials are missing, read Reddit's website through your Chrome with playwright-cli and the Playwright extension instead. Reports are marked as unofficial data. Reddit's terms do not permit this, and the Reddit account signed in to Chrome is at risk. Off by default.",
+      "default": false
+    }
+  }
 }

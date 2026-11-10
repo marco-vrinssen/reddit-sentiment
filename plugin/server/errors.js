@@ -2,6 +2,7 @@
 //   credentials  missing or rejected app credentials: stops every tool
 //   auth         the token endpoint failed after retries: stops every tool
 //   access       the app lacks Data API access: stops every tool
+//   browser      the browser fallback cannot attach or Reddit showed a page instead of data: stops the tool
 //   rate_limited the rate limit did not clear in time: stops the tool
 //   not_found    unknown community or post: recorded as a gap
 //   forbidden    private, quarantined or banned community: recorded as a gap
@@ -18,6 +19,6 @@ export class RedditError extends Error {
   }
 
   get fatal() {
-    return ['credentials', 'auth', 'access', 'rate_limited', 'input'].includes(this.kind)
+    return ['credentials', 'auth', 'access', 'browser', 'rate_limited', 'input'].includes(this.kind)
   }
 }

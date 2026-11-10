@@ -4,7 +4,8 @@ How the plugin turns Reddit threads into an index, a trend, an evidence grade an
 
 ## Data
 
-- Source: Reddit's official Data API, application-only OAuth. No scraping, no third-party archives.
+- Source: Reddit's official Data API, application-only OAuth. No third-party archives.
+- Browser fallback: only when the user turned it on and the API credentials are missing. It reads the same JSON pages from the Reddit website through the user's Chrome, one every 3 seconds, and stops at any block, sign-in wall or CAPTCHA. The data has the same shape, so every rule below applies unchanged, and every result and report is marked as unofficial.
 - Communities are chosen by measurement: subscribers plus comments per day over the window, ranked by `log10(1 + subscribers) + log10(1 + comments per day)`. A big but quiet community and a small but busy one both rank below one that is big and busy.
 - Posts are each community's top posts over the window (Reddit's `top` listing), or the top posts matching a query for broad communities.
 

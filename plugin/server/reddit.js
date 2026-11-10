@@ -178,6 +178,7 @@ export function createRedditClient({
   function stats() {
     const resetIn = rate.resetAt ? Math.max(0, Math.round((rate.resetAt - now()) / 1000)) : null
     return {
+      data_source: 'official_api',
       api_calls: calls,
       rate_limit: { remaining: rate.remaining, used: rate.used, resets_in_seconds: resetIn },
     }
@@ -213,6 +214,17 @@ function httpError(status, body, path) {
   if (status === 404 && reason === 'banned') return new RedditError('forbidden', `${path}: community is banned`, status)
   if (status === 404) return new RedditError('not_found', `${path}: not found`, status)
   return new RedditError('upstream', `${path}: Reddit answered HTTP ${status}`, status)
+}
+
+// The client the plugin and the scripts use: endpoints and request ceiling can be overridden from the environment.
+export function createRedditClientFromEnv({ credentials, env = process.env, log }) {
+  return createRedditClient({
+    credentials,
+    authUrl: env.REDDIT_AUTH_URL || undefined,
+    apiBase: env.REDDIT_API_BASE || undefined,
+    maxQpm: Number(env.REDDIT_MAX_QPM) || 100,
+    log,
+  })
 }
 
 // Unpacks a Listing and checks its shape, so a changed response fails loudly instead of reading as empty.

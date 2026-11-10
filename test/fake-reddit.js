@@ -14,7 +14,7 @@ export function loadFixture(path) {
   return JSON.parse(readFileSync(path, 'utf8'))
 }
 
-function shiftTimes(value, shift) {
+export function shiftTimes(value, shift) {
   if (Array.isArray(value)) return value.map((item) => shiftTimes(item, shift))
   if (value && typeof value === 'object') {
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, k === 'created_utc' ? v + shift : shiftTimes(v, shift)]))

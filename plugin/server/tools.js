@@ -68,7 +68,7 @@ export function createTools({ getClient, now = Date.now, version = '0' }) {
       name: 'check_connection',
       title: 'Check Reddit connection',
       description:
-        'Checks that the Reddit app credentials load and authenticate, and shows the current rate limit. Returns where each credential came from (environment or keychain), never the values. Call it before a scan.',
+        'Checks the data source before a scan. With credentials: that they load and authenticate, where each came from (environment or keychain, never the values) and the rate limit. Without credentials and with the browser fallback turned on: that the browser can read Reddit. data_source says which: official_api or browser_fallback.',
       inputSchema: { type: 'object', properties: {}, additionalProperties: false },
       async handler() {
         const client = getClient()
@@ -266,6 +266,11 @@ export function createTools({ getClient, now = Date.now, version = '0' }) {
         if (repeats.length > 0) throw inputError(`Already in ${scan.id}: ${repeats.map((r) => r.name).join(', ')}.`)
 
         const client = getClient()
+        const source = client.stats().data_source
+        scan.source ??= source
+        if (scan.source !== source) {
+          throw inputError(`${scan.id} holds ${scan.source} data and the current source is ${source}. Start a new scan, since one scan never mixes sources.`)
+        }
         const t = redditTimeRange(scan.days)
         const coverage = []
         const added = []
@@ -479,6 +484,9 @@ export function createTools({ getClient, now = Date.now, version = '0' }) {
         const { weights, ...metrics } = result
 
         const warnings = [...scan.warnings, ...metrics.warnings]
+        if (scan.source === 'browser_fallback') {
+          warnings.unshift('Unofficial data: read from the Reddit website through a browser, not the official Data API. Reddit does not permit this. Mark the report as unofficial.')
+        }
         if (unlabeled / scan.posts.length > RULES.unlabeledWarn) {
           warnings.push(`${unlabeled} of ${scan.posts.length} returned posts are unlabeled and left out of the index.`)
         }
@@ -489,6 +497,7 @@ export function createTools({ getClient, now = Date.now, version = '0' }) {
           const evidence = {
             generated_at: new Date(now()).toISOString(),
             plugin_version: version,
+            data_source: scan.source,
             mode,
             scan: { id: scan.id, window_days: scan.days, window: scan.window, coverage: scan.coverage, filtered: scan.filtered },
             rules: RULES,
@@ -513,6 +522,7 @@ export function createTools({ getClient, now = Date.now, version = '0' }) {
 
         return {
           scan_id,
+          data_source: scan.source,
           mode,
           window: { days: scan.days, ...scan.window },
           sample,

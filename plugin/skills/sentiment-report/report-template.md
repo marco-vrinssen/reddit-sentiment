@@ -6,6 +6,7 @@ The title line depends on the mode:
 
 - Industry: `# <Industry> on Reddit: <Invest | Watch | Avoid>`
 - Market: `# Market sentiment on Reddit: <Invest | Watch | Avoid>`
+- With `browser_fallback` data, either title ends in ` (unofficial data)`.
 
 The rest:
 
@@ -13,6 +14,8 @@ The rest:
 <YYYY-MM-DD, today> · window <from date> to <to date> (<days> days) · <communities scored> communities · <threads scored> threads scored
 
 ## Verdict
+
+<Only with browser_fallback data: "Unofficial data: read from the Reddit website through a browser, not the official Reddit Data API.">
 
 **<Invest | Watch | Avoid>**, confidence <High | Medium | Low>
 
@@ -76,6 +79,7 @@ Not listed: <brands that are private or co-operatives>.
 
 ## Risks and limits
 
+- <Only with browser_fallback data: "Collected from the Reddit website through a browser, which Reddit's terms do not permit. The official Data API was not used.">
 - <Gaps: failed or empty communities, fewer communities than planned, partial data>
 - <Concentration: themes or results carried by few threads>
 - <Industry and company risks raised in the threads, with citations>
